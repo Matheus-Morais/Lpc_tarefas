@@ -39,13 +39,11 @@ class TarefaResource(ModelResource):
     def obj_delete_list(self, bundle, **kwargs):
         raise Unauthorized("Não é possivel deletar toda a lista!")
 
-    '''def obj_create(self, bundle, **kwargs):
+    def obj_create(self, bundle, **kwargs):
         u = bundle.data['usuario'].split('/')
         p = bundle.data['projeto'].split('/')
-        print(u)
-        print(p)
-        proj = Projeto.objects.get(pk = int(p[4]))
-        if not(Tarefa.objects.filter(projeto=proj)):
+
+        if not(Tarefa.objects.filter(nome=bundle.data['nome'])):
             ta = Tarefa()
             ta.nome = bundle.data['nome']
             ta.dataHora = bundle.data['dataHora']
@@ -56,18 +54,7 @@ class TarefaResource(ModelResource):
             bundle.obj = ta
             return bundle
         else:
-            raise Unauthorized("Não é possivel deletar toda a lista!")'''
-
-    def obj_delete(self, bundle, **kwargs):
-        #u = bundle.data['usuario']
-
-        print(self.authorized_delete_detail(self, UsuarioResource(), bundle))
-        print(UserResource())
-        print(self.usuario)
-
-    def obj_update(self, bundle, skip_errors=False, **kwargs):
-        print(1)
-
+            raise Unauthorized("Não é permitido que uma tarefa seja associada a mais de um projeto!")
 
     usuario = fields.ToOneField(UsuarioResource, 'usuario')
     projeto = fields.ToOneField(ProjetoResource, 'projeto')
