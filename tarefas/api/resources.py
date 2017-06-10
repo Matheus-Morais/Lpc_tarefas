@@ -1,9 +1,12 @@
+from django.utils.baseconv import base64
 from tastypie.resources import ModelResource
 from tastypie import fields, utils
 from tarefas.models import *
 from django.contrib.auth.models import User
 from tastypie.authorization import Authorization
 from tastypie.exceptions import Unauthorized
+from tastypie.authentication import * #BasicAuthentication, ApiKeyAuthentication, get_username_field
+from django.http.request import *
 
 class UsuarioResource(ModelResource):
     def obj_delete_list(self, bundle, **kwargs):
@@ -36,6 +39,38 @@ class ProjetoResource(ModelResource):
         }
 
 class TarefaResource(ModelResource):
+    def obj_update(self, bundle, **kwargs):
+        u = bundle.data['usuario'].split('/')
+        p = bundle.data['projeto'].split('/')
+        usuario = Usuario.objects.get(pk= u[4])
+        projeto = Projeto.objects.get(pk=p[4])
+        user = bundle.request.user
+        x = Usuario.objects.filter(nome = user)
+        print(user)
+
+        '''if usuario.nome.upper() == str(user).upper():
+            tarefa = Tarefa.objects.get(pk=int(kwargs['pk']))
+            tarefa.nome = bundle.data['nome']
+            tarefa.dataHora = bundle.data['dataHora']
+            tarefa.usuario = usuario
+            tarefa.projeto = projeto
+
+            tarefa.save()
+            bundle.obj = tarefa
+
+            return bundle
+        else:
+            raise Unauthorized("Você não tem autorização para atualizar esse usuario!")'''
+
+    def obj_delete(self, bundle, **kwargs):
+        tarefa = Tarefa.objects.get(pk = int(kwargs['pk']))
+        user = bundle.request.user
+
+        if tarefa.usuario.nome.upper() == str(user).upper():
+            tarefa.delete()
+        else:
+            raise Unauthorized("Você não tem autorização para deletar esse usuario!")
+
     def obj_delete_list(self, bundle, **kwargs):
         raise Unauthorized("Não é possivel deletar toda a lista!")
 
@@ -61,7 +96,8 @@ class TarefaResource(ModelResource):
     class Meta:
         queryset = Tarefa.objects.all()
         allowed_methods = ['get', 'post', 'delete', 'put']
-        authorization = Authorization()
+        #authorization = Authorization()
+        authentication = ApiKeyAuthentication()
         filtering = {
             "descricao": ('exact', 'startswith')
         }
