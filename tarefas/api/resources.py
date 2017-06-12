@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from tastypie.authorization import Authorization
 from tastypie.exceptions import Unauthorized
 from tastypie.authentication import * #BasicAuthentication, ApiKeyAuthentication, get_username_field
+from django.contrib.auth.models import User
 from django.http.request import *
 
 class UsuarioResource(ModelResource):
@@ -13,18 +14,18 @@ class UsuarioResource(ModelResource):
         raise Unauthorized("Não é possivel deletar toda a lista!")
 
     class Meta:
-        queryset = Usuario.objects.all()
+        queryset = User.objects.all()
         allowed_methods = ['get', 'post', 'delete', 'put']
         authorization = Authorization()
         filtering = {
             "descricao": ('exact', 'startswith')
         }
 
-class UserResource(ModelResource):
+'''class UserResource(ModelResource):
     class Meta:
         queryset = User.objects.all()
         resource_name = 'user'
-        excludes = ['password', 'is_active']
+        excludes = ['password', 'is_active']'''
 
 class ProjetoResource(ModelResource):
     def obj_delete_list(self, bundle, **kwargs):
@@ -40,15 +41,15 @@ class ProjetoResource(ModelResource):
 
 class TarefaResource(ModelResource):
     def obj_update(self, bundle, **kwargs):
+        t = Tarefa.objects.get(pk=int(kwargs['pk']))
         u = bundle.data['usuario'].split('/')
         p = bundle.data['projeto'].split('/')
-        usuario = Usuario.objects.get(pk= u[4])
-        projeto = Projeto.objects.get(pk=p[4])
-        user = bundle.request.user
-        x = Usuario.objects.filter(nome = user)
-        print(user)
 
-        '''if usuario.nome.upper() == str(user).upper():
+        usuario = User.objects.get(pk=int(u[4]))
+        projeto = Projeto.objects.get(pk=int(p[4]))
+        userLogado = bundle.request.user
+
+        if t.usuario == userLogado:
             tarefa = Tarefa.objects.get(pk=int(kwargs['pk']))
             tarefa.nome = bundle.data['nome']
             tarefa.dataHora = bundle.data['dataHora']
@@ -60,13 +61,13 @@ class TarefaResource(ModelResource):
 
             return bundle
         else:
-            raise Unauthorized("Você não tem autorização para atualizar esse usuario!")'''
+            raise Unauthorized("Você não tem autorização para atualizar esse usuario!")
 
     def obj_delete(self, bundle, **kwargs):
         tarefa = Tarefa.objects.get(pk = int(kwargs['pk']))
-        user = bundle.request.user
+        userLogado = bundle.request.user
 
-        if tarefa.usuario.nome.upper() == str(user).upper():
+        if tarefa.usuario == userLogado:
             tarefa.delete()
         else:
             raise Unauthorized("Você não tem autorização para deletar esse usuario!")
